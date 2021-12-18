@@ -1,34 +1,4 @@
-"""
-YourWorld ,MMO RPG, Mobilna gra turowa we wstępnej wersji 2D
-na androida wykorzystująca:
-kivy ,kivyMD, buildozzer , api googlemaps ,lokalizacje użytkownika
-Gra oferuje użytkownikom rozwój postaci oraz "
 
-dodatek do gry: posiadanie włości(prywatny obszar mapy) ,
- świat gry będzie rozdzielony na parcele/sektory
-gracz na początku gry nie będzie posiadał żadnych włości , można je nabyć za odpowiednią kwotę waluty premium,
- lub oglądając reklamy ograniczona ilosc dziennie , po obejzeniu reklam użytkownik otrzymuje premium walute
- za którą może nabyć włości , posiadanie włości odblokowuje nowe funkcje gry:
-  (mini gry/hazard, możliwośc budowy uzytecznych budunków-wymagane materialy do budowy ,włości wraz
-  z budynkami mogą być odsprzedawane innym graczom by oni mogli przejąć bonusy płynące z:
-   powstałej wioski/miasteczka. parcele/sektory można łaczyć / premium walute mozna przekazywac innym graczom
-   stwórz system który blokuje tą mozliwość dla graczy ponizej 100lv tak by gracze nie tworzyli nub kont do zbierania
-   premium waluty , badz stwórz rejest graczy którzy tylko ogladaja reklamy dla premium waluty ,
-   po analizie danego konta perm ban . maksymalna ilość posiadanych parceli to łączny obszar około 2km kwadratowych
-   uzytkownicy przebywający na czyimś obszarze płacą podatek dla wlasiciela parcelu w wysokości
-   :gracz sam ustala podatek od możliwości korzystania z jego budynków . (przykładowo gracz wykupił
-   2km kwadratowe parceli w gdańsku koło PKP , wybudował mnóstwo budynków które dostarczają specjalne
-    skórki,zwierzaki,bonusy do rozwoju spelli ,jakieś mini gry itp , ustalił cenę korzystania z jego miasteczka na
-    10PW  ZA MIESIAC -premium waluta .
-
-ZABLOKUJ MOZLIWOS WEJSCIA POSTACI DO WODY BADZ JESLI TO NIEMOZLIWE , DORZUC FUNKCJE KTÓRA ZABIERA 25%HP CO 2SEKUNDY
-, W PRZYPADKU ŚMIERCI COFNIJ BOHATERA DO MIEJSCA W KTÓRYM ZNAJDOWAŁ SIĘ 2MIN WCZEŚNIEJ , STWÓRZ FUNKCJE
-PRZECHOWUJĄCĄ DANE O LOKALIZACJI AWATARA ZAPISUJ TO W BAZIE DANYCH MYSQL
-
-
-
-
-"""
 
 from kivymd.app import MDApp
 from kivy.lang.builder import Builder
@@ -295,8 +265,6 @@ PIONOWA_POZYCJA_GRACZA=40.41362602642995
 POZIOMA_POZYCJA_GRACZA=-3.6819590868909984
 DZWIGNIAPOBORU = True
 
-# get_latlon_at(x, y, zoom=None):
-# Return the current coordinate (lat, lon) at the (x, y) widget coordinate
 
 #############################################################################################
                                            # WELCOME SCREEN
@@ -461,7 +429,6 @@ class UsersPlatform(Screen):
 
 
 ####################################################################################################
-# PLAYGAME ArrowKeys , GOOGLEMAPS ,
 # Przeniesienie do okna i klasy Bitwa w przypadku zderzenia obiektów (gracz-mob)
 # +wprowadzenie do funkcji BuildYourWorld(Parcels,buildings town
 # Stworzenie funkcji generujacej stwory wokół gracza jesli mniej niz 5 generuj dodatkową randomową ilość od 2 do 5
