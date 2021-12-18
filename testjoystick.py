@@ -218,12 +218,9 @@ ScreenManager:
             id: PLAYER_POSITION
             lat: 40.41362602642995
             lon: -3.6819590868909984 
-            source: "img/myicons/heromenuicon.png"
+            source: "img/Knight/Attack/5.png"
                        
-    Image:
-        id: ikonabohatera
-        source: "img/Knight/Attack/5.png"
-        pos_hint: {'center_x': 0.5, 'center_y': 0.5}      
+      
     MDIconButton :
         icon : "apps-box" 
         pos_hint: {'center_x':0.1,'center_y':0.1}
@@ -434,7 +431,7 @@ class UsersPlatform(Screen):
 # Stworzenie funkcji generujacej stwory wokół gracza jesli mniej niz 5 generuj dodatkową randomową ilość od 2 do 5
 
 
-class UsersPlayGameOnMap(Screen,FloatLayout):
+class UsersPlayGameOnMap(Screen):
 
     def buttonUP(self):
         self.LoadPlayerObject(0, 1)
