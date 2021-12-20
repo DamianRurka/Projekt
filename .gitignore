@@ -2,3 +2,6 @@
 venv/
 cache/
 venv/Lib
+.idea
+venv
+cache
