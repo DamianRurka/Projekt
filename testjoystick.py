@@ -280,16 +280,32 @@ class LoginScreen(Screen):
         pass
 
     def login_button_checker(self):
-        global USER_ID
-        USER_ID = 1
-        global USER_NAME
-        USER_NAME = "Seph"
-        global PIONOWA_POZYCJA_GRACZA
-        PIONOWA_POZYCJA_GRACZA = "51.1276481"
-        global POZIOMA_POZYCJA_GRACZA
-        POZIOMA_POZYCJA_GRACZA = "16.9936345"
 
-        self.manager.current = "UserPlatformFunctions"
+        connection = mysql.connector.connect(user='root', password='Wikingowie123x',
+                                             host='127.0.0.1', database='yourworldonline',
+                                             auth_plugin='mysql_native_password')
+
+        cursorPS = connection.cursor(buffered=True)
+        username = self.ids.userlogin.text
+        usercheck = (username,)
+        datacheck = "SELECT id,username,userscol,pozycjapionowa,pozycjapozioma FROM users WHERE username=%s"
+        cursorPS.execute(datacheck, usercheck)
+
+        for row in cursorPS:
+            if self.ids.userlogin.text and self.ids.userpassword.text in row:
+
+                global USER_ID
+                USER_ID = row[0]
+                global USER_NAME
+                USER_NAME = row[1]
+                global PIONOWA_POZYCJA_GRACZA
+                PIONOWA_POZYCJA_GRACZA = row[3]
+                global POZIOMA_POZYCJA_GRACZA
+                POZIOMA_POZYCJA_GRACZA = row[4]
+
+                self.manager.current = "UserPlatformFunctions"
+
+        connection.close()
 
 
 ########################################################################################
