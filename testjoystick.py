@@ -4,7 +4,7 @@ from kivymd.app import MDApp
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.floatlayout import FloatLayout
-from kivy.garden.mapview import MapView
+from kivy_garden.mapview import MapView
 from kivy.app import App
 from touch import MyMapView
 import requests
@@ -12,6 +12,7 @@ import smtplib, ssl
 import autopep8
 import pycodestyle
 import mysql.connector
+import my_map_view
 
 
 #########################################################################################
@@ -210,6 +211,7 @@ ScreenManager:
     name: 'screenmapmove'
     MyMapView:
         id: mapview
+        double_tap_zoom: False
         lat: 40.41362602642995
         lon: -3.6819590868909984 
         zoom:19        
@@ -304,6 +306,7 @@ class LoginScreen(Screen):
                 self.manager.current = "UserPlatformFunctions"
 
         connection.close()
+
 
 ########################################################################################
                                     # REGISTRATION FUNCTION
@@ -449,7 +452,7 @@ class UsersPlayGameOnMap(Screen):
     def LoadPlayerObject(self, horizontalDirection=0, verticalDirection=0):
         horizontalSpeed = 0.0001
         verticalSpeed = 0.0002
-        print(App.get_running_app().root.ids.mapview.lat, App.get_running_app().root.ids.mapview.lon)
+        print(self.ids.mapview.lat, self.ids.mapview.lon)
         self.PLAYER_POSITION(
             self.ids.mapview.lon + horizontalSpeed * horizontalDirection,
             self.ids.mapview.lat + verticalSpeed * verticalDirection
