@@ -4,7 +4,7 @@ from kivymd.app import MDApp
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.floatlayout import FloatLayout
-from kivy.garden.mapview import MapView
+from kivy_garden.mapview import MapView
 from kivy.app import App
 from touch import MyMapView
 import requests
