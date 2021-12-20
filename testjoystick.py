@@ -6,6 +6,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.floatlayout import FloatLayout
 from kivy.garden.mapview import MapView
 from kivy.app import App
+from touch import MyMapView
 import requests
 import smtplib, ssl
 import autopep8
@@ -207,7 +208,7 @@ ScreenManager:
 
 <UsersPlayGameOnMap>:
     name: 'screenmapmove'
-    MapView:
+    MyMapView:
         id: mapview
         lat: 40.41362602642995
         lon: -3.6819590868909984 

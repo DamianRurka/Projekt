@@ -61,8 +61,8 @@ class UsersPlayGameOnMap(FloatLayout):
         self.LoadPlayerObject(0, -1)
 
     def LoadPlayerObject(self, horizontalDirection=0, verticalDirection=0):
-        horizontalSpeed = 0.0001
-        verticalSpeed = 0.0002
+        horizontalSpeed = 0.00001
+        verticalSpeed = 0.00001
         print(App.get_running_app().root.ids.mapview.lat, App.get_running_app().root.ids.mapview.lon)
         self.PLAYER_POSITION(
             self.ids.mapview.lon + horizontalSpeed * horizontalDirection,
