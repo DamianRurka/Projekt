@@ -12,6 +12,7 @@ import smtplib, ssl
 import autopep8
 import pycodestyle
 import mysql.connector
+import my_map_view
 
 
 #########################################################################################
@@ -210,6 +211,7 @@ ScreenManager:
     name: 'screenmapmove'
     MyMapView:
         id: mapview
+        double_tap_zoom: False
         lat: 40.41362602642995
         lon: -3.6819590868909984 
         zoom:19        
@@ -278,32 +280,17 @@ class LoginScreen(Screen):
         pass
 
     def login_button_checker(self):
+        global USER_ID
+        USER_ID = 1
+        global USER_NAME
+        USER_NAME = "Seph"
+        global PIONOWA_POZYCJA_GRACZA
+        PIONOWA_POZYCJA_GRACZA = "51.1276481"
+        global POZIOMA_POZYCJA_GRACZA
+        POZIOMA_POZYCJA_GRACZA = "16.9936345"
 
-        connection = mysql.connector.connect(user='root', password='Wikingowie123x',
-                                             host='127.0.0.1', database='yourworldonline',
-                                             auth_plugin='mysql_native_password')
+        self.manager.current = "UserPlatformFunctions"
 
-        cursorPS = connection.cursor(buffered=True)
-        username = self.ids.userlogin.text
-        usercheck = (username,)
-        datacheck = "SELECT id,username,userscol,pozycjapionowa,pozycjapozioma FROM users WHERE username=%s"
-        cursorPS.execute(datacheck, usercheck)
-
-        for row in cursorPS:
-            if self.ids.userlogin.text and self.ids.userpassword.text in row:
-
-                global USER_ID
-                USER_ID = row[0]
-                global USER_NAME
-                USER_NAME = row[1]
-                global PIONOWA_POZYCJA_GRACZA
-                PIONOWA_POZYCJA_GRACZA = row[3]
-                global POZIOMA_POZYCJA_GRACZA
-                POZIOMA_POZYCJA_GRACZA = row[4]
-
-                self.manager.current = "UserPlatformFunctions"
-
-        connection.close()
 
 ########################################################################################
                                     # REGISTRATION FUNCTION
@@ -449,7 +436,7 @@ class UsersPlayGameOnMap(Screen):
     def LoadPlayerObject(self, horizontalDirection=0, verticalDirection=0):
         horizontalSpeed = 0.0001
         verticalSpeed = 0.0002
-        print(App.get_running_app().root.ids.mapview.lat, App.get_running_app().root.ids.mapview.lon)
+        print(self.ids.mapview.lat, self.ids.mapview.lon)
         self.PLAYER_POSITION(
             self.ids.mapview.lon + horizontalSpeed * horizontalDirection,
             self.ids.mapview.lat + verticalSpeed * verticalDirection
