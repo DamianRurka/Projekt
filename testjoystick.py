@@ -1,12 +1,11 @@
-
 from kivy.uix.button import Button
 from kivymd.app import MDApp
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.floatlayout import FloatLayout
-from kivy_garden.mapview import MapView, MapMarker,MapMarkerPopup
+from kivy_garden.mapview import MapView, MapMarker, MapMarkerPopup
 from kivy.app import App
-from touch import MyMapView
+from my_map_view import MyMapView
 import requests
 import smtplib, ssl
 import autopep8
@@ -14,7 +13,6 @@ import pycodestyle
 import mysql.connector
 import my_map_view
 import random
-
 
 #########################################################################################
 # Okna Aplikacji
@@ -269,22 +267,23 @@ ScreenManager:
 """
 
 #############################################################################################
-                                          #GLOBALNE!!!!!!!
-USER_ID=None
-USER_NAME=None
-PIONOWA_POZYCJA_GRACZA=None
-POZIOMA_POZYCJA_GRACZA=None
+# GLOBALNE!!!!!!!
+USER_ID = None
+USER_NAME = None
+PIONOWA_POZYCJA_GRACZA = None
+POZIOMA_POZYCJA_GRACZA = None
 DZWIGNIAPOBORU = True
 
 
 #############################################################################################
-                                           # WELCOME SCREEN
+# WELCOME SCREEN
 
 class MenuScreen(Screen):
     pass
 
+
 ###############################################################################################
-                                            # LOGIN FUNCTION
+# LOGIN FUNCTION
 class LoginScreen(Screen):
 
     def build(self):
@@ -304,7 +303,6 @@ class LoginScreen(Screen):
 
         for row in cursorPS:
             if self.ids.userlogin.text and self.ids.userpassword.text in row:
-
                 global USER_ID
                 USER_ID = row[0]
                 global USER_NAME
@@ -320,7 +318,7 @@ class LoginScreen(Screen):
 
 
 ########################################################################################
-                                    # REGISTRATION FUNCTION
+# REGISTRATION FUNCTION
 
 class RegistrationScreen(Screen):
     def build(self):
@@ -384,7 +382,7 @@ class RegistrationScreen(Screen):
 
 
 #################################################################################################
-                                     # SEND USER-PASSWORD TO EMAIL
+# SEND USER-PASSWORD TO EMAIL
 
 class EmailScreen(Screen):
     pass
@@ -430,6 +428,7 @@ class EmailScreen(Screen):
                         serwer.login(nadawca, syspush)
                         serwer.sendmail(nadawca, odbiorca, wiadomosc)
 
+
 ####################################################################################################
 # USERS GAME PLATFORM , MENU SCREEEN
 # FUNKCJA OBSLUGUJACA EKWIPUNEK,INWENTARZ, LECZENIE BOHATERA,
@@ -448,7 +447,6 @@ class UsersPlatform(Screen):
 
 class UsersPlayGameOnMap(Screen):
 
-
     # def PLAYER_POSITION_FROMDATABASE(self):
     #     playerpos = self.ids.PLAYER_POSITION
     #     playerpos.lat = PIONOWA_POZYCJA_GRACZA
@@ -456,29 +454,25 @@ class UsersPlayGameOnMap(Screen):
     #     mapposition = self.ids.mapview
     #     mapposition.center_on(PIONOWA_POZYCJA_GRACZA, POZIOMA_POZYCJA_GRACZA)
 
-
     def MonsterLocationsGenerator(self):
         self.listalokalizacji = []
-        lokalizacjalat = self.ids.mapview.lat
+        lokalizacjalat = self.ids.PLAYER_POSITION.lat
         zakresdolny = lokalizacjalat + 0.001
         zakresgorny = lokalizacjalat - 0.001
-        randomlonditude = random.uniform(zakresgorny, zakresdolny)
+        randomlatitude = random.uniform(zakresgorny, zakresdolny)
 
-        lokalizacjalon = self.ids.mapview.lon
+        lokalizacjalon = self.ids.PLAYER_POSITION.lon
         zakresprawo = lokalizacjalon - 0.001
         zakreslewo = lokalizacjalon + 0.001
-        randomlatitude = random.uniform(zakresprawo, zakreslewo)
+        randomlonditude = random.uniform(zakresprawo, zakreslewo)
+        print(randomlatitude, randomlonditude)
+        print(self.ids.PLAYER_POSITION.lat, self.ids.PLAYER_POSITION.lon)
 
-        self.randomlondi=randomlonditude
-        self.randomlati=randomlatitude
-
-        m1 = MapMarkerPopup(lon=self.randomlondi ,lat=self.randomlati,
+        m1 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
                             source="img/myicons/goblin.jfif")
-        m1.add_widget(Button(text="Fight with\n monster!",on_release = root.GoToFightScreen()))
-        self.add_widget(m1)
-
-        print(self.randomlondi)
-        print(self.randomlati)
+        m1.placeholder = Button(text="Fight with\n monster!", x=200, y=200, on_release=self.GoToFightScreen)
+        self.ids.mapview.add_marker(m1)
+        # self.add_widget(m1)
 
     def buttonUP(self):
         self.LoadPlayerObject(0, 1)
@@ -496,7 +490,6 @@ class UsersPlayGameOnMap(Screen):
         self.LoadPlayerObject(0, -1)
         self.MonsterLocationsGenerator()
 
-
     def LoadPlayerObject(self, horizontalDirection=0, verticalDirection=0):
         horizontalSpeed = 0.0001
         verticalSpeed = 0.0002
@@ -512,16 +505,13 @@ class UsersPlayGameOnMap(Screen):
         mapposition = self.ids.mapview
         mapposition.center_on(lat, lon)
 
-
     def WORLD_MAP_ITEMS_LOAD(self):
         pass
 
-
     def BuildingsOnMap(self):
         pass
-        #Zbuduj funkcję budowania budynków w lokalizacjach wybranych przez gracza i
+        # Zbuduj funkcję budowania budynków w lokalizacjach wybranych przez gracza i
         # zapisuj lokalizacje budynków bazie danych
-
 
         # MapMarkerPopup:
         # id: ikonaBUDYNKU
@@ -533,19 +523,20 @@ class UsersPlayGameOnMap(Screen):
         # print(self.lat, self.lon)
         # on press: wyswietl mini okno sklepu
 
-    def GoToFightScreen(self):
-        self.manager.current = "Fight"
+    def GoToFightScreen(self, dummy):
+        self.manager.current = "Battle"
         pass
 
 
 ####################################################################################################
 # FIGHT SCREEN   PVE
-#PO Wygranej Bitwie zapisz w bazie danych postęp gracza-zdobyte przedmioty i doświadczenie i
+# PO Wygranej Bitwie zapisz w bazie danych postęp gracza-zdobyte przedmioty i doświadczenie i
 # wróć do okna eksploracji swiata
 
 
 class FightFighters(Screen):
-     pass
+    pass
+
 
 #     def LoadMonstersAndStatisticsFromDatabase(self):
 #         pass
@@ -601,8 +592,6 @@ class YourWorldOnline(MDApp):
     def build(self):
         self.screen = Builder.load_string(screen_helper)
         return self.screen
-
-
 
 
 YourWorldOnline().run()
