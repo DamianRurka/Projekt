@@ -1,10 +1,10 @@
 
-
+from kivy.uix.button import Button
 from kivymd.app import MDApp
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.floatlayout import FloatLayout
-from kivy_garden.mapview import MapView
+from kivy_garden.mapview import MapView, MapMarker,MapMarkerPopup
 from kivy.app import App
 from touch import MyMapView
 import requests
@@ -13,6 +13,7 @@ import autopep8
 import pycodestyle
 import mysql.connector
 import my_map_view
+import random
 
 
 #########################################################################################
@@ -25,7 +26,7 @@ ScreenManager:
     EmailScreen:
     UsersPlatform:
     UsersPlayGameOnMap:
-
+    FightFighters:
 
 <MenuScreen>:
     name: 'menu'
@@ -206,14 +207,14 @@ ScreenManager:
         icon: "play"
         width: dp(250)
 
-
 <UsersPlayGameOnMap>:
     name: 'screenmapmove'
     MyMapView:
         id: mapview
         double_tap_zoom: False
         lat: 40.41362602642995
-        lon: -3.6819590868909984 
+        lon: -3.6819590868909984
+         
         zoom:19        
         max_zoom : 19
         min_zoom :19
@@ -222,8 +223,13 @@ ScreenManager:
             lat: 40.41362602642995
             lon: -3.6819590868909984 
             source: "img/Knight/Attack/5.png"
-                       
-      
+        MapMarker:
+            id: Monsters_position
+            lat:
+            lon:
+            Button:
+                on_release:
+                             
     MDIconButton :
         icon : "apps-box" 
         pos_hint: {'center_x':0.1,'center_y':0.1}
@@ -255,14 +261,19 @@ ScreenManager:
         user_font_size : 40 
         on_press: root.button_LEFT()
 
+<FightFighters>:
+    name: 'Battle'
+    FitImage: 
+        source: "img/Background/background.png"
+
 """
 
 #############################################################################################
                                           #GLOBALNE!!!!!!!
 USER_ID=None
 USER_NAME=None
-PIONOWA_POZYCJA_GRACZA=40.41362602642995
-POZIOMA_POZYCJA_GRACZA=-3.6819590868909984
+PIONOWA_POZYCJA_GRACZA=None
+POZIOMA_POZYCJA_GRACZA=None
 DZWIGNIAPOBORU = True
 
 
@@ -437,31 +448,67 @@ class UsersPlatform(Screen):
 
 class UsersPlayGameOnMap(Screen):
 
+
+    # def PLAYER_POSITION_FROMDATABASE(self):
+    #     playerpos = self.ids.PLAYER_POSITION
+    #     playerpos.lat = PIONOWA_POZYCJA_GRACZA
+    #     playerpos.lon = POZIOMA_POZYCJA_GRACZA
+    #     mapposition = self.ids.mapview
+    #     mapposition.center_on(PIONOWA_POZYCJA_GRACZA, POZIOMA_POZYCJA_GRACZA)
+
+
+    def MonsterLocationsGenerator(self):
+        self.listalokalizacji = []
+        lokalizacjalat = self.ids.mapview.lat
+        zakresdolny = lokalizacjalat + 0.001
+        zakresgorny = lokalizacjalat - 0.001
+        randomlonditude = random.uniform(zakresgorny, zakresdolny)
+
+        lokalizacjalon = self.ids.mapview.lon
+        zakresprawo = lokalizacjalon - 0.001
+        zakreslewo = lokalizacjalon + 0.001
+        randomlatitude = random.uniform(zakresprawo, zakreslewo)
+
+        self.randomlondi=randomlonditude
+        self.randomlati=randomlatitude
+
+        m1 = MapMarkerPopup(lon=self.randomlondi ,lat=self.randomlati,
+                            source="img/myicons/goblin.jfif")
+        m1.add_widget(Button(text="Fight with\n monster!",on_release = root.GoToFightScreen()))
+        self.add_widget(m1)
+
+        print(self.randomlondi)
+        print(self.randomlati)
+
     def buttonUP(self):
         self.LoadPlayerObject(0, 1)
+        self.MonsterLocationsGenerator()
 
     def button_RIGHT(self):
         self.LoadPlayerObject(1, 0)
+        self.MonsterLocationsGenerator()
 
     def button_LEFT(self):
         self.LoadPlayerObject(-1, 0)
+        self.MonsterLocationsGenerator()
 
     def button_DOWN(self):
         self.LoadPlayerObject(0, -1)
+        self.MonsterLocationsGenerator()
+
 
     def LoadPlayerObject(self, horizontalDirection=0, verticalDirection=0):
         horizontalSpeed = 0.0001
         verticalSpeed = 0.0002
-        print(self.ids.mapview.lat, self.ids.mapview.lon)
         self.PLAYER_POSITION(
             self.ids.mapview.lon + horizontalSpeed * horizontalDirection,
             self.ids.mapview.lat + verticalSpeed * verticalDirection
         )
 
     def PLAYER_POSITION(self, lon, lat):
-        playerpos = self.ids.PLAYER_POSITION
-        playerpos.lat = lat
-        playerpos.lon = lon
+        self.playerpos = self.ids.PLAYER_POSITION
+        self.playerpos.lat = lat
+        self.playerpos.lon = lon
         mapposition = self.ids.mapview
         mapposition.center_on(lat, lon)
 
@@ -469,34 +516,16 @@ class UsersPlayGameOnMap(Screen):
     def WORLD_MAP_ITEMS_LOAD(self):
         pass
 
-    def LoadingPlayerPosFromDataBase(self):
-        pass
-        #wykonanie tej funkcji umieść na początku funkcji       LOAD PLAYER OBJECT
-        #wczytaj dane o pozycji gracza
-
-    #         connection = mysql.connector.connect(user='root', password='Wikingowie123x',
-    #                                              host='127.0.0.1', database='yourworldonline',
-    #                                              auth_plugin='mysql_native_password')
-    #
-    #         cursor = connection.cursor(buffered=True)
-    #
-    #         #ZAPIS DANYCH
-    #
-    #         insertQuery = "INSERT INTO users(username, userscol, email) VALUES(%(username)s, %(userscol)s, %(email)s)"
-    #         insertData = {'username': '11111111', 'userscol': '111', 'email': '11111'}
-    #
-    #         cursor.execute(insertQuery, insertData)
-    #
-    #         connection.commit()
 
     def BuildingsOnMap(self):
         pass
-        #Zbuduj funkcję randomowego respawnu budynków w losowych lokalizacjach lub wczytuj
-        # lokalizacje tych budynków z bazy danych
+        #Zbuduj funkcję budowania budynków w lokalizacjach wybranych przez gracza i
+        # zapisuj lokalizacje budynków bazie danych
+
 
         # MapMarkerPopup:
         # id: ikonaBUDYNKU
-        # source: obraz budynku.PNG
+        # source: obraz_budynku.PNG
         # pos_hint: {'center_x': 0.5, 'center_y': 0.5}
         # lat: 40.41362602642995
         # lon: -3.6819590868909984
@@ -504,25 +533,22 @@ class UsersPlayGameOnMap(Screen):
         # print(self.lat, self.lon)
         # on press: wyswietl mini okno sklepu
 
-    def RespawnMonstersObjects(self):
-        pass
-
-    def LoadMonstersAndStatisticsFromDatabase(self):
-        pass
-
-    def GoToFightFightersScreenWhenObjectsCollideOrUserTouchObject(self):
+    def GoToFightScreen(self):
+        self.manager.current = "Fight"
         pass
 
 
 ####################################################################################################
-# FIGHT SCREEN       PVE
-
+# FIGHT SCREEN   PVE
 #PO Wygranej Bitwie zapisz w bazie danych postęp gracza-zdobyte przedmioty i doświadczenie i
 # wróć do okna eksploracji swiata
 
-# class FightFigters():
-#     pass
 
+class FightFighters(Screen):
+     pass
+
+#     def LoadMonstersAndStatisticsFromDatabase(self):
+#         pass
 #    def BackToExploreWorldWhenFightEnd(self):
 #        pass
 #  oblugadanych():
@@ -562,6 +588,7 @@ class UsersPlayGameOnMap(Screen):
 
 sm = ScreenManager()
 sm.add_widget(UsersPlayGameOnMap(name='screenmapmove'))
+sm.add_widget(FightFighters(name='Battle'))
 sm.add_widget(UsersPlatform(name='UserPlatformFunctions'))
 sm.add_widget(MenuScreen(name='menu'))
 sm.add_widget(LoginScreen(name='login'))

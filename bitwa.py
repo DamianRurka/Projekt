@@ -22,7 +22,7 @@ action_cooldown = 0
 action_wait_time = 90
 attack = False
 potion = False
-potion_effect = 15
+potion_effect = 300
 clicked = False
 game_over = 0
 
@@ -215,7 +215,7 @@ class DamageText(pygame.sprite.Sprite):
 damage_text_group = pygame.sprite.Group()
  
 knight = Fighter(200, 260, 'Knight', 50, 10, 3)
-bandit1 = Fighter(550, 270, 'Bandit', 20, 6, 1)
+bandit1 = Fighter(550, 270, 'Bandit', 150, 6, 1)
 
 knight_health_bar = HealthBar(100, screen_height - bottom_panel + 40, knight.hp, knight.max_hp)
 bandit1_health_bar = HealthBar(550, screen_height - bottom_panel + 40, bandit1.hp, bandit1.max_hp)
@@ -223,7 +223,7 @@ bandit1_health_bar = HealthBar(550, screen_height - bottom_panel + 40, bandit1.h
 
 # create buttons
 potion_button = button.Button(screen, 100, screen_height - bottom_panel + 70, potion_img, 64, 64)
-restart_button = button.Button(screen, 330, 120, restart_img, 120, 30)
+
 
 #   PETLA BITWY
 run = True
@@ -347,13 +347,7 @@ while run:
             screen.blit(victory_img, (250, 50))
         if game_over == -1:
             screen.blit(defeat_img, (290, 50))
-        if restart_button.draw():
-            knight.reset()
 
-            bandit1.reset()
-            current_fighter = 1
-            action_cooldown = 1
-            game_over = 0
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
