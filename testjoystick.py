@@ -258,6 +258,16 @@ ScreenManager:
         pos_hint : {'center_x':0.35,'center_y':0.1}
         user_font_size : 40 
         on_press: root.button_LEFT()
+    MDRoundFlatButton: 
+        text: "SAVE LOCATION"
+        font_size: 12
+        pos_hint: {"center_x":0.5,"center_y":0.98}
+        on_press: root.Save_Location_IN_DataBASE()
+    MDRoundFlatButton: 
+        text: "BACK TO YOUR SAVE LOCATION"
+        font_size: 12
+        pos_hint: {"center_x":0.5,"center_y":0.89}
+        on_press: root.PLAYER_POSITION_FROMDATABASE()
 
 <FightFighters>:
     name: 'Battle'
@@ -273,7 +283,7 @@ USER_NAME = None
 PIONOWA_POZYCJA_GRACZA = None
 POZIOMA_POZYCJA_GRACZA = None
 DZWIGNIAPOBORU = True
-
+licznik = 0
 
 #############################################################################################
 # WELCOME SCREEN
@@ -446,33 +456,62 @@ class UsersPlatform(Screen):
 
 
 class UsersPlayGameOnMap(Screen):
+    def Save_Location_IN_DataBASE(self):
+        global PIONOWA_POZYCJA_GRACZA
+        PIONOWA_POZYCJA_GRACZA = self.ids.PLAYER_POSITION.lon
+        global POZIOMA_POZYCJA_GRACZA
+        POZIOMA_POZYCJA_GRACZA = self.ids.PLAYER_POSITION.lat
+        self.PLAYER_POSITION_FROMDATABASE()
 
-    # def PLAYER_POSITION_FROMDATABASE(self):
-    #     playerpos = self.ids.PLAYER_POSITION
-    #     playerpos.lat = PIONOWA_POZYCJA_GRACZA
-    #     playerpos.lon = POZIOMA_POZYCJA_GRACZA
-    #     mapposition = self.ids.mapview
-    #     mapposition.center_on(PIONOWA_POZYCJA_GRACZA, POZIOMA_POZYCJA_GRACZA)
+        connection = mysql.connector.connect(user='root', password='Wikingowie123x',
+                                                     host='127.0.0.1', database='yourworldonline',
+                                                     auth_plugin='mysql_native_password')
+
+        cursor = connection.cursor(buffered=True)
+        pozycjapionowa= self.ids.PLAYER_POSITION.lon
+        pozycjapozioma= self.ids.PLAYER_POSITION.lat
+        username = USER_NAME
+        usernlondi = (pozycjapionowa,username,)
+        usernlandi= (pozycjapozioma,username,)
+        Querylonditude = "UPDATE users set pozycjapionowa = %s WHERE username=%s"
+        cursor.execute(Querylonditude, usernlondi)
+        Querylanditude = "UPDATE users set pozycjapozioma = %sWHERE username=%s"
+        cursor.execute(Querylanditude, usernlandi)
+
+        connection.commit()
+        if connection.is_connected():
+            cursor.close()
+            connection.close()
+
+    def PLAYER_POSITION_FROMDATABASE(self):
+        playerpos = self.ids.PLAYER_POSITION
+        playerpos.lat = PIONOWA_POZYCJA_GRACZA
+        playerpos.lon = POZIOMA_POZYCJA_GRACZA
+        mapposition = self.ids.mapview
+        mapposition.center_on(playerpos.lat, playerpos.lon)
+
 
     def MonsterLocationsGenerator(self):
-        self.listalokalizacji = []
-        lokalizacjalat = self.ids.PLAYER_POSITION.lat
-        zakresdolny = lokalizacjalat + 0.001
-        zakresgorny = lokalizacjalat - 0.001
-        randomlatitude = random.uniform(zakresgorny, zakresdolny)
+        global licznik
+        licznik += 1
+        if licznik == 5:
+            lokalizacjalat = self.ids.PLAYER_POSITION.lat
+            zakresdolny = lokalizacjalat + 0.001
+            zakresgorny = lokalizacjalat - 0.001
+            randomlatitude = random.uniform(zakresgorny, zakresdolny)
 
-        lokalizacjalon = self.ids.PLAYER_POSITION.lon
-        zakresprawo = lokalizacjalon - 0.001
-        zakreslewo = lokalizacjalon + 0.001
-        randomlonditude = random.uniform(zakresprawo, zakreslewo)
-        print(randomlatitude, randomlonditude)
-        print(self.ids.PLAYER_POSITION.lat, self.ids.PLAYER_POSITION.lon)
+            lokalizacjalon = self.ids.PLAYER_POSITION.lon
+            zakresprawo = lokalizacjalon - 0.001
+            zakreslewo = lokalizacjalon + 0.001
+            randomlonditude = random.uniform(zakresprawo, zakreslewo)
+            print(randomlatitude, randomlonditude)
+            print(self.ids.PLAYER_POSITION.lat, self.ids.PLAYER_POSITION.lon)
 
-        m1 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
-                            source="img/myicons/goblin.jfif")
-        m1.placeholder = Button(text="Fight with\n monster!", x=200, y=200, on_release=self.GoToFightScreen)
-        self.ids.mapview.add_marker(m1)
-        # self.add_widget(m1)
+            m1 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
+                                source="img/myicons/goblin.jfif")
+            m1.placeholder = Button(text="Fight with\n monster!", x=70, y=400, on_release=self.GoToFightScreen)
+            self.ids.mapview.add_marker(m1)
+            licznik = 0
 
     def buttonUP(self):
         self.LoadPlayerObject(0, 1)
@@ -505,75 +544,34 @@ class UsersPlayGameOnMap(Screen):
         mapposition = self.ids.mapview
         mapposition.center_on(lat, lon)
 
-    def WORLD_MAP_ITEMS_LOAD(self):
-        pass
-
     def BuildingsOnMap(self):
         pass
         # Zbuduj funkcję budowania budynków w lokalizacjach wybranych przez gracza i
-        # zapisuj lokalizacje budynków bazie danych
+        # zapisuj lokalizacje budynków w bazie danych i
 
         # MapMarkerPopup:
         # id: ikonaBUDYNKU
         # source: obraz_budynku.PNG
-        # pos_hint: {'center_x': 0.5, 'center_y': 0.5}
-        # lat: 40.41362602642995
-        # lon: -3.6819590868909984
-        # on_lat:
-        # print(self.lat, self.lon)
         # on press: wyswietl mini okno sklepu
+    def LoadBuildingsFromDataBase(self):
+        pass
 
     def GoToFightScreen(self, dummy):
         self.manager.current = "Battle"
         pass
-
 
 ####################################################################################################
 # FIGHT SCREEN   PVE
 # PO Wygranej Bitwie zapisz w bazie danych postęp gracza-zdobyte przedmioty i doświadczenie i
 # wróć do okna eksploracji swiata
 
-
 class FightFighters(Screen):
     pass
 
 
-#     def LoadMonstersAndStatisticsFromDatabase(self):
-#         pass
-#    def BackToExploreWorldWhenFightEnd(self):
-#        pass
-#  oblugadanych():
-#     def run(self):
-#
-#         connection = mysql.connector.connect(user='root', password='Wikingowie123x',
-#                                              host='127.0.0.1', database='yourworldonline',
-#                                              auth_plugin='mysql_native_password')
-#
-#         cursor = connection.cursor(buffered=True)
-#
-#         #ZAPIS DANYCH
-#
-#         insertQuery = "INSERT INTO users(username, userscol, email) VALUES(%(username)s, %(userscol)s, %(email)s)"
-#         insertData = {'username': '11111111', 'userscol': '111', 'email': '11111'}
-#
-#         cursor.execute(insertQuery, insertData)
-#
-#         connection.commit()
-#
-#         #POBIERANIE DANYCH
-#
-#         query = 'SELECT id,username,userscol,email FROM users'          #pobieranie danych
-#         cursor.execute(query)
-#
-#         for row in cursor:
-#             if "damian" in row:
-#                 print(True)
-#
-#
-#         connection.close()  # przerwanie połączenia
-#
-#
-# oblugadanych().run()
+    def BackToExploreWorldWhenFightEnd(self):
+        pass
+
 ####################################################################################################
 # WIDGET SCREENS
 
@@ -586,13 +584,11 @@ sm.add_widget(LoginScreen(name='login'))
 sm.add_widget(RegistrationScreen(name='Registration'))
 sm.add_widget(EmailScreen(name='emailreminder'))
 
-
 class YourWorldOnline(MDApp):
 
     def build(self):
         self.screen = Builder.load_string(screen_helper)
         return self.screen
-
 
 YourWorldOnline().run()
 #####################################################################################################
