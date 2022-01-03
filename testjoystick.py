@@ -28,6 +28,7 @@ ScreenManager:
     UsersPlatform:
     UsersPlayGameOnMap:
     FightFighters:
+    FightDragon:
 
 <MenuScreen>:
     name: 'menu'
@@ -45,7 +46,6 @@ ScreenManager:
         text: 'Zapomniałeś hasła ?'
         pos_hint: {'center_x':0.5,'center_y':0.2}
         on_press: root.manager.current = 'emailreminder'
-
 
 <LoginScreen>:
     name: 'login'
@@ -276,6 +276,41 @@ ScreenManager:
     name: 'Battle'
     id : battlessc
     FitImage: 
+        source: 'img/myicons/bagna.png'
+        id : battlescreen
+    MDIconButton :
+        id : player   
+        icon : 'img/Knight/Attack/5.png'     
+        pos_hint : {'center_x':0.1,'center_y':0.4}
+        user_font_size : 80
+    Label:
+        text:''
+        id:nick
+        pos_hint : {'center_x':0.1,'center_y':0.6}
+    Label:
+        text:''
+        id:playerhp
+        pos_hint : {'center_x':0.1,'center_y':0.7}
+    Label:
+        text:''
+        id:enemyhp
+        pos_hint : {'center_x':0.9,'center_y':0.7}
+    Label:
+        text:''
+        id: monstername
+        pos_hint : {'center_x':0.9,'center_y':0.6}
+        
+    MDIconButton :
+        id : monster  
+        icon : 'img/myicons/goblin.png'       
+        pos_hint : {'center_x':0.9,'center_y':0.4}
+        user_font_size : 80 
+        on_press: root.petla_walki()
+        
+<FightDragon>:
+    name: 'battledragon'
+    id : battles
+    FitImage: 
         source: "img/Background/background.png"
         id : battlescreen
     MDIconButton :
@@ -283,12 +318,28 @@ ScreenManager:
         icon : 'img/Knight/Attack/5.png'     
         pos_hint : {'center_x':0.1,'center_y':0.4}
         user_font_size : 80
+    Label:
+        text:''
+        id:nick
+        pos_hint : {'center_x':0.1,'center_y':0.6}
+    Label:
+        text:''
+        id:playerhp
+        pos_hint : {'center_x':0.1,'center_y':0.7}
+    Label:
+        text:''
+        id:enemyhp
+        pos_hint : {'center_x':0.9,'center_y':0.7}
+    Label:
+        text:''
+        id: monstername
+        pos_hint : {'center_x':0.9,'center_y':0.6}
         
     MDIconButton :
         id : monster  
-        icon : 'img/goblin.png'       
+        icon : "img/myicons/dragon.png"    
         pos_hint : {'center_x':0.9,'center_y':0.4}
-        user_font_size : 80 
+        user_font_size : 180 
         on_press: root.petla_walki()
 
 """
@@ -309,7 +360,6 @@ PLAYER_LV = 1
 
 class MenuScreen(Screen):
     pass
-
 
 ###############################################################################################
 # LOGIN FUNCTION
@@ -370,9 +420,7 @@ class LoginScreen(Screen):
 
                 self.manager.current = "UserPlatformFunctions"
                 self.check_player_lv()
-
         connection.close()
-
 
 ########################################################################################
 # REGISTRATION FUNCTION
@@ -489,19 +537,13 @@ class EmailScreen(Screen):
 
 ####################################################################################################
 # USERS GAME PLATFORM , MENU SCREEEN
-# FUNKCJA OBSLUGUJACA EKWIPUNEK,INWENTARZ, LECZENIE BOHATERA,
-# STATYSTYKI I UMIEJETNOSCI I ZAPISUJACA/AKTUALIZUJACA JE W BAZIE DANYCH
 
 class UsersPlatform(Screen):
     def build(self):
         pass
 
-
 ####################################################################################################
-# Przeniesienie do okna i klasy Bitwa w przypadku zderzenia obiektów (gracz-mob)
-# +wprowadzenie do funkcji BuildYourWorld(Parcels,buildings town
-# Stworzenie funkcji generujacej stwory wokół gracza jesli mniej niz 5 generuj dodatkową randomową ilość od 2 do 5
-
+                                   #WORLD EXPLORATION
 
 class UsersPlayGameOnMap(Screen):
 
@@ -558,13 +600,17 @@ class UsersPlayGameOnMap(Screen):
             randommonster = random.randint(1, 2)
 
             if randommonster == 1:
-                imgmonster = "img/myicons/goblin.jfif"
+                imgmonster = "img/myicons/goblin.png"
+                self.m1 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
+                                         source=imgmonster)
+                self.m1.placeholder = Button(text="Fight with\n monster!", x=70, y=400, on_release=self.GoToFightGOBLIN)
+                self.ids.mapview.add_marker(self.m1)
             else:
-                imgmonster= "img/myicons/dragon.jfif"
-            self.m1 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
-                                source=imgmonster)
-            self.m1.placeholder = Button(text="Fight with\n monster!", x=70, y=400, on_release=self.GoToFightScreen )
-            self.ids.mapview.add_marker(self.m1)
+                imgmonster= "img/myicons/dragon.png"
+                self.m2 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
+                                    source=imgmonster)
+                self.m2.placeholder = Button(text="Fight with\n monster!", x=70, y=400, on_release=self.GoToFightDRAGON)
+                self.ids.mapview.add_marker(self.m2)
             licznik = 0
 
     def buttonUP(self):
@@ -600,15 +646,18 @@ class UsersPlayGameOnMap(Screen):
 
     def BuildingsOnMap(self):
         pass
-        # Zbuduj funkcję budowania budynków w lokalizacjach wybranych przez gracza i
-        # zapisuj lokalizacje budynków w bazie danych i
 
     def LoadBuildingsFromDataBase(self):
         pass
 
-    def GoToFightScreen(self, dummy):
+    def GoToFightGOBLIN(self, dummy):
         self.manager.current = "Battle"
         self.ids.mapview.remove_marker(self.m1)
+        pass
+
+    def GoToFightDRAGON(self, dummy):
+        self.manager.current = "battledragon"
+        self.ids.mapview.remove_marker(self.m2)
         pass
 
 ####################################################################################################
@@ -623,16 +672,22 @@ class FightFighters(Screen):
         self.max_hp = 200
         self.monsterHP = 100
 
+
     def petla_walki(self):
+        self.ids.nick.text= USER_NAME
+        self.ids.monstername.text = 'Your Nemezis'
         self.monsterstrenght = random.randint(2, 20)
         self.player_strenght = (8 * PLAYER_LV * 0.75) + random.randint(2, 10)
         self.monsterHP -= self.player_strenght
         #zaatakowałeś stwora
         self.max_hp -= self.monsterstrenght
         #zostałeś zaatakowany
-        print(self.monsterHP)
-        print(self.max_hp)
+        self.ids.playerhp.text = str(self.max_hp)
+        self.ids.enemyhp.text = str(self.monsterHP)
+
         if self.monsterHP < 0:
+            self.ids.playerhp.text = ''
+            self.ids.enemyhp.text = ''
             print('wygrana')
             global PLAYEREXPERIENCE
             PLAYEREXPERIENCE += random.randint(25, 100)
@@ -658,19 +713,62 @@ class FightFighters(Screen):
             self.monsterHP = 100
             self.max_hp = 200
             self.manager.current = 'screenmapmove'
-            # przegrana,cofnij do widoku mapy
-        # lblplayerhp = Label(text = str(self.max_hp))
-        # lblmonsterhp = Label(text=str(self.monsterHP))
-        #
-        # FloatLayout.add_widget(lbl,)
-        # return lbl
+
+
+class FightDragon(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.max_hp = 200 * PLAYER_LV
+        self.monsterHP = 400
+
+
+    def petla_walki(self):
+        self.ids.nick.text= USER_NAME
+        self.ids.monstername.text = 'DRAGON'
+        self.monsterstrenght = random.randint(2, 20)
+        self.player_strenght = (8 * PLAYER_LV * 0.75) + random.randint(2, 10)
+        self.monsterHP -= self.player_strenght
+        #zaatakowałeś stwora
+        self.max_hp -= self.monsterstrenght
+        #zostałeś zaatakowany
+        self.ids.playerhp.text = str(self.max_hp)
+        self.ids.enemyhp.text = str(self.monsterHP)
+
+        if self.monsterHP < 0:
+            self.ids.playerhp.text = ''
+            self.ids.enemyhp.text = ''
+
+            global PLAYEREXPERIENCE
+            PLAYEREXPERIENCE += random.randint(300, 1000)
+            self.monsterHP = 400
+            self.max_hp = 200
+            self.manager.current = 'screenmapmove'
+            connection = mysql.connector.connect(user='root', password='Wikingowie123x',
+                                                 host='127.0.0.1', database='yourworldonline',
+                                                 auth_plugin='mysql_native_password')
+
+            cursor = connection.cursor(buffered=True)
+            username = USER_NAME
+            userexp = (PLAYEREXPERIENCE, username,)
+            Queryexp = "UPDATE users set experience = %s WHERE username=%s"
+            cursor.execute(Queryexp, userexp)
+            connection.commit()
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+            #wyswietl napis wygrana i po 1s cofnij uzytkownika do widoku
+
+        elif self.max_hp < 0:
+            self.monsterHP = 400
+            self.max_hp = 200
+            self.manager.current = 'screenmapmove'
 
 ####################################################################################################
 # WIDGET SCREENS
-
 sm = ScreenManager()
 sm.add_widget(UsersPlayGameOnMap(name='screenmapmove'))
 sm.add_widget(FightFighters(name='Battle'))
+sm.add_widget(FightDragon(name='battledragon'))
 sm.add_widget(UsersPlatform(name='UserPlatformFunctions'))
 sm.add_widget(MenuScreen(name='menu'))
 sm.add_widget(LoginScreen(name='login'))
@@ -681,8 +779,8 @@ class YourWorldOnline(MDApp):
 
     def build(self):
         self.screen = Builder.load_string(screen_helper)
-        self.sound = SoundLoader.load('img/myicons/music.mp3')
-        self.sound.play()
+        # self.sound = SoundLoader.load('img/myicons/music.mp3')
+        # self.sound.play()
         return self.screen
 
 YourWorldOnline().run()
