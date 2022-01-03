@@ -1,4 +1,5 @@
 from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivymd.app import MDApp
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
@@ -6,6 +7,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy_garden.mapview import MapView, MapMarker, MapMarkerPopup
 from kivy.app import App
 from my_map_view import MyMapView
+from kivy.core.audio import SoundLoader
 import requests
 import smtplib, ssl
 import autopep8
@@ -13,6 +15,7 @@ import pycodestyle
 import mysql.connector
 import my_map_view
 import random
+from time import sleep
 
 #########################################################################################
 # Okna Aplikacji
@@ -271,8 +274,22 @@ ScreenManager:
 
 <FightFighters>:
     name: 'Battle'
+    id : battlessc
     FitImage: 
         source: "img/Background/background.png"
+        id : battlescreen
+    MDIconButton :
+        id : player   
+        icon : 'img/Knight/Attack/5.png'     
+        pos_hint : {'center_x':0.1,'center_y':0.4}
+        user_font_size : 80
+        
+    MDIconButton :
+        id : monster  
+        icon : 'img/goblin.png'       
+        pos_hint : {'center_x':0.9,'center_y':0.4}
+        user_font_size : 80 
+        on_press: root.petla_walki()
 
 """
 
@@ -284,6 +301,8 @@ PIONOWA_POZYCJA_GRACZA = None
 POZIOMA_POZYCJA_GRACZA = None
 DZWIGNIAPOBORU = True
 licznik = 0
+PLAYEREXPERIENCE = 0
+PLAYER_LV = 1
 
 #############################################################################################
 # WELCOME SCREEN
@@ -299,6 +318,30 @@ class LoginScreen(Screen):
     def build(self):
         pass
 
+    def check_player_lv(self):
+        if PLAYEREXPERIENCE >= 0 and PLAYEREXPERIENCE <= 299:
+            self.LV = 1
+        elif PLAYEREXPERIENCE > 300 and PLAYEREXPERIENCE <= 999:
+            self.LV = 2
+        elif PLAYEREXPERIENCE > 1000 and PLAYEREXPERIENCE <= 2000:
+            self.LV = 3
+        elif PLAYEREXPERIENCE > 2001 and PLAYEREXPERIENCE <= 4500:
+            self.LV = 4
+        elif PLAYEREXPERIENCE > 4501 and PLAYEREXPERIENCE <= 10000:
+            self.LV = 5
+        elif PLAYEREXPERIENCE > 10001 and PLAYEREXPERIENCE <= 17000:
+            self.LV = 6
+        elif PLAYEREXPERIENCE > 17001 and PLAYEREXPERIENCE <= 29000:
+            self.LV = 7
+        elif PLAYEREXPERIENCE > 29001 and PLAYEREXPERIENCE <= 45000:
+            self.LV = 8
+        elif PLAYEREXPERIENCE > 45001 and PLAYEREXPERIENCE <= 67000:
+            self.LV = 9
+        elif PLAYEREXPERIENCE > 67001:
+            self.LV = 10
+        global PLAYER_LV
+        PLAYER_LV = self.LV
+
     def login_button_checker(self):
 
         connection = mysql.connector.connect(user='root', password='Wikingowie123x',
@@ -308,7 +351,7 @@ class LoginScreen(Screen):
         cursorPS = connection.cursor(buffered=True)
         username = self.ids.userlogin.text
         usercheck = (username,)
-        datacheck = "SELECT id,username,userscol,pozycjapionowa,pozycjapozioma FROM users WHERE username=%s"
+        datacheck = "SELECT id,username,userscol,pozycjapionowa,pozycjapozioma,experience FROM users WHERE username=%s"
         cursorPS.execute(datacheck, usercheck)
 
         for row in cursorPS:
@@ -321,8 +364,12 @@ class LoginScreen(Screen):
                 PIONOWA_POZYCJA_GRACZA = row[3]
                 global POZIOMA_POZYCJA_GRACZA
                 POZIOMA_POZYCJA_GRACZA = row[4]
+                intexp = int(row[5])
+                global PLAYEREXPERIENCE
+                PLAYEREXPERIENCE = int(intexp)
 
                 self.manager.current = "UserPlatformFunctions"
+                self.check_player_lv()
 
         connection.close()
 
@@ -378,11 +425,12 @@ class RegistrationScreen(Screen):
                 cursor = connection.cursor(buffered=True)
 
                 insertQuery = "INSERT INTO users(username, userscol," \
-                              " email) VALUES(%(username)s, %(userscol)s, %(email)s)"
+                              " email, experience) VALUES(%(username)s, %(userscol)s, %(email)s, %(experience)s)"
 
                 insertData = {'username': self.ids.userlogin.text,
                               'userscol': self.ids.userpassword.text,
-                              'email': self.ids.useremail.text}
+                              'email': self.ids.useremail.text,
+                              'experience': 0}
 
                 cursor.execute(insertQuery, insertData)
                 connection.commit()
@@ -456,6 +504,7 @@ class UsersPlatform(Screen):
 
 
 class UsersPlayGameOnMap(Screen):
+
     def Save_Location_IN_DataBASE(self):
         global PIONOWA_POZYCJA_GRACZA
         PIONOWA_POZYCJA_GRACZA = self.ids.PLAYER_POSITION.lon
@@ -478,10 +527,12 @@ class UsersPlayGameOnMap(Screen):
         Querylanditude = "UPDATE users set pozycjapozioma = %sWHERE username=%s"
         cursor.execute(Querylanditude, usernlandi)
 
+
         connection.commit()
         if connection.is_connected():
             cursor.close()
             connection.close()
+
 
     def PLAYER_POSITION_FROMDATABASE(self):
         playerpos = self.ids.PLAYER_POSITION
@@ -504,13 +555,16 @@ class UsersPlayGameOnMap(Screen):
             zakresprawo = lokalizacjalon - 0.001
             zakreslewo = lokalizacjalon + 0.001
             randomlonditude = random.uniform(zakresprawo, zakreslewo)
-            print(randomlatitude, randomlonditude)
-            print(self.ids.PLAYER_POSITION.lat, self.ids.PLAYER_POSITION.lon)
+            randommonster = random.randint(1, 2)
 
-            m1 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
-                                source="img/myicons/goblin.jfif")
-            m1.placeholder = Button(text="Fight with\n monster!", x=70, y=400, on_release=self.GoToFightScreen)
-            self.ids.mapview.add_marker(m1)
+            if randommonster == 1:
+                imgmonster = "img/myicons/goblin.jfif"
+            else:
+                imgmonster= "img/myicons/dragon.jfif"
+            self.m1 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
+                                source=imgmonster)
+            self.m1.placeholder = Button(text="Fight with\n monster!", x=70, y=400, on_release=self.GoToFightScreen )
+            self.ids.mapview.add_marker(self.m1)
             licznik = 0
 
     def buttonUP(self):
@@ -549,15 +603,12 @@ class UsersPlayGameOnMap(Screen):
         # Zbuduj funkcję budowania budynków w lokalizacjach wybranych przez gracza i
         # zapisuj lokalizacje budynków w bazie danych i
 
-        # MapMarkerPopup:
-        # id: ikonaBUDYNKU
-        # source: obraz_budynku.PNG
-        # on press: wyswietl mini okno sklepu
     def LoadBuildingsFromDataBase(self):
         pass
 
     def GoToFightScreen(self, dummy):
         self.manager.current = "Battle"
+        self.ids.mapview.remove_marker(self.m1)
         pass
 
 ####################################################################################################
@@ -565,12 +616,54 @@ class UsersPlayGameOnMap(Screen):
 # PO Wygranej Bitwie zapisz w bazie danych postęp gracza-zdobyte przedmioty i doświadczenie i
 # wróć do okna eksploracji swiata
 
+
 class FightFighters(Screen):
-    pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.max_hp = 200
+        self.monsterHP = 100
 
+    def petla_walki(self):
+        self.monsterstrenght = random.randint(2, 20)
+        self.player_strenght = (8 * PLAYER_LV * 0.75) + random.randint(2, 10)
+        self.monsterHP -= self.player_strenght
+        #zaatakowałeś stwora
+        self.max_hp -= self.monsterstrenght
+        #zostałeś zaatakowany
+        print(self.monsterHP)
+        print(self.max_hp)
+        if self.monsterHP < 0:
+            print('wygrana')
+            global PLAYEREXPERIENCE
+            PLAYEREXPERIENCE += random.randint(25, 100)
+            self.monsterHP = 100
+            self.max_hp = 200
+            self.manager.current = 'screenmapmove'
+            connection = mysql.connector.connect(user='root', password='Wikingowie123x',
+                                                 host='127.0.0.1', database='yourworldonline',
+                                                 auth_plugin='mysql_native_password')
 
-    def BackToExploreWorldWhenFightEnd(self):
-        pass
+            cursor = connection.cursor(buffered=True)
+            username = USER_NAME
+            userexp = (PLAYEREXPERIENCE, username,)
+            Queryexp = "UPDATE users set experience = %s WHERE username=%s"
+            cursor.execute(Queryexp, userexp)
+            connection.commit()
+            if connection.is_connected():
+                cursor.close()
+                connection.close()
+            #wyswietl napis wygrana i po 1s cofnij uzytkownika do widoku
+
+        elif self.max_hp < 0:
+            self.monsterHP = 100
+            self.max_hp = 200
+            self.manager.current = 'screenmapmove'
+            # przegrana,cofnij do widoku mapy
+        # lblplayerhp = Label(text = str(self.max_hp))
+        # lblmonsterhp = Label(text=str(self.monsterHP))
+        #
+        # FloatLayout.add_widget(lbl,)
+        # return lbl
 
 ####################################################################################################
 # WIDGET SCREENS
@@ -588,9 +681,8 @@ class YourWorldOnline(MDApp):
 
     def build(self):
         self.screen = Builder.load_string(screen_helper)
+        self.sound = SoundLoader.load('img/myicons/music.mp3')
+        self.sound.play()
         return self.screen
 
 YourWorldOnline().run()
-#####################################################################################################
-# LOAD PLAYERDATA AND REFRESH/UPLOAD ON DATABASE
-# class
