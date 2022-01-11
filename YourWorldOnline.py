@@ -1,410 +1,72 @@
 from kivy.uix.button import Button
-from kivy.uix.label import Label
 from kivymd.app import MDApp
 from kivy.lang.builder import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.floatlayout import FloatLayout
-from kivy_garden.mapview import MapView, MapMarker, MapMarkerPopup
-from kivy.app import App
-from my_map_view import MyMapView
+from kivy_garden.mapview import MapMarkerPopup
 from kivy.core.audio import SoundLoader
-import requests
-import smtplib, ssl
-import autopep8
-import pycodestyle
 import mysql.connector
-import my_map_view
 import random
-from time import sleep
+from screen_helper import screen_helper
+from user.registration import RegistrationScreen
+from user.email import EmailScreen
+from user.usermenu import UsersPlatform
+import my_map_view
 
-#########################################################################################
-# Okna Aplikacji
-screen_helper = """
-ScreenManager:
-    MenuScreen:
-    LoginScreen:
-    RegistrationScreen:
-    EmailScreen:
-    UsersPlatform:
-    UsersPlayGameOnMap:
-    FightFighters:
-    FightDragon:
-
-<MenuScreen>:
-    name: 'menu'
-    FitImage:
-        source: "img/ekran_logowania.png"
-    MDRectangleFlatButton:
-        text: 'Zaloguj'
-        pos_hint: {'center_x':0.5,'center_y':0.4}
-        on_press: root.manager.current = 'login'
-    MDRectangleFlatButton:
-        text: 'Zarejestruj'
-        pos_hint: {'center_x':0.5,'center_y':0.3}
-        on_press: root.manager.current = 'Registration'
-    MDRectangleFlatButton:
-        text: 'Zapomniałeś hasła ?'
-        pos_hint: {'center_x':0.5,'center_y':0.2}
-        on_press: root.manager.current = 'emailreminder'
-
-<LoginScreen>:
-    name: 'login'
-    FitImage:
-        source: "img/loginimmage.png"
-    MDTextFieldRound:
-        id: userlogin
-        hint_text: "nazwa uzytkownika"
-        icon_right: "account"
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {"center_x":0.5, "center_y":0.6}
-
-    MDTextFieldRound:
-        id: userpassword
-        hint_text: "hasło"
-        icon_right: "eye-off"
-        icon_left: 'key-variant'
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {"center_x":0.5,"center_y":0.5}   
-        password: True 
-
-    MDRoundFlatButton: 
-        text: "Zaloguj"
-        font_size: 12
-        pos_hint: {"center_x":0.5,"center_y":0.4}
-        on_press: root.login_button_checker()   
-    MDRectangleFlatButton:
-        text: 'Powrót'
-        pos_hint: {"center_x":0.5,"center_y":0.1}
-        on_press: root.manager.current = 'menu'
-
-
-<RegistrationScreen>:
-    name: 'Registration'
-    FitImage:
-        source: "img/rejgisImage.png"
-    MDTextFieldRound:
-        id: userlogin
-        hint_text: "nazwa użytkownika"
-        min_text_length: 5
-        icon_right: "account"
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {"center_x":0.5, "center_y":0.6}
-
-    MDTextFieldRound:
-        id: userpassword
-        hint_text: "hasło"
-        icon_right: "eye-off"
-        icon_left: 'key-variant'
-        max_text_length: 10
-        min_text_length: 5
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {"center_x":0.5,"center_y":0.5}   
-        password: True 
-
-    MDTextFieldRound:
-        id: userpasswordagain
-        hint_text: "powtórz hasło"
-        icon_right: "eye-off"
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {"center_x":0.5,"center_y":0.4}   
-        password: True    
-
-    MDTextFieldRound:
-        id: useremail
-        hint_text: "email"
-        icon_right: "email"
-        min_text_length: 9
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {"center_x":0.5,"center_y":0.3}   
-
-    MDRoundFlatButton: 
-        text: "Zarejestruj"
-        font_size: 12
-        pos_hint: {"center_x":0.5,"center_y":0.2}
-        on_press: root.regis_button_checker()    
-
-    MDRectangleFlatButton:
-        text: 'Powrót'
-        pos_hint: {'center_x':0.5,'center_y':0.1}
-        on_press: root.manager.current = 'menu'
-
-
-<EmailScreen>:
-    name: 'emailreminder'
-    FitImage:
-        source: "img/ekran.png"
-    MDTextFieldRound:
-        id: userlogin
-        hint_text: "nazwa uzytkownika"
-        icon_right: "account"
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {"center_x":0.5, "center_y":0.6}
-
-    MDTextFieldRound:
-        id: emailprzypomijhaslo
-        hint_text: "email"
-        icon_right: "email"
-        size_hint_x: None
-        width: 200
-        font_size: 18
-        pos_hint: {"center_x":0.5, "center_y":0.5}
-
-    MDRoundFlatButton: 
-        text: "Wyslij Haslo"
-        font_size: 12
-        pos_hint: {"center_x":0.5,"center_y":0.4}
-        on_press: root.email_password_sender()
-
-    MDRectangleFlatButton:
-        text: 'Powrót'
-        pos_hint: {'center_x':0.5,'center_y':0.1}
-        on_press: root.manager.current = 'menu'
-
-
-<UsersPlatform>:
-    name: 'UserPlatformFunctions'
-    FitImage:
-        source: "img/MenuUserPlatformheroitems.png"
-
-    MDIconButton :   
-        icon : "img/myicons/armors.png"       
-        pos_hint : {'center_x':.06,'center_y':.86}
-        user_font_size : 20   
-    MDIconButton :   
-        icon : "img/myicons/swords.png"       
-        pos_hint : {'center_x':.06,'center_y':.96}
-        user_font_size : 20
-    MDIconButton :   
-        icon : "img/myicons/potions.png"       
-        pos_hint : {'center_x':.06,'center_y':.76}
-        user_font_size : 20    
-    MDIconButton :   
-        icon : "treasure-chest"       
-        pos_hint : {'center_x':.06,'center_y':.66}
-        user_font_size : 40 
-    MDIconButton :   
-        icon : "crown"       
-        pos_hint : {'center_x':.9,'center_y':.96}
-        user_font_size : 40 
-
-    MDRoundFlatIconButton:
-        text: 'EXPLORE WORLD'
-        pos_hint: {'center_x':0.5,'center_y':0.1}
-        on_press: root.manager.current = 'screenmapmove'
-        icon: "play"
-        width: dp(250)
-
-<UsersPlayGameOnMap>:
-    name: 'screenmapmove'
-    MyMapView:
-        id: mapview
-        double_tap_zoom: False
-        lat: 40.41362602642995
-        lon: -3.6819590868909984
-         
-        zoom:19        
-        max_zoom : 19
-        min_zoom :19
-        MapMarkerPopup:
-            id: PLAYER_POSITION
-            lat: 40.41362602642995
-            lon: -3.6819590868909984 
-            source: "img/Knight/Attack/5.png"
-        MapMarker:
-            id: Monsters_position
-            lat:
-            lon:
-            Button:
-                on_release:
-                             
-    MDIconButton :
-        icon : "apps-box" 
-        pos_hint: {'center_x':0.1,'center_y':0.1}
-        user_font_size : 40 
-        on_press: root.manager.current = 'UserPlatformFunctions'
-    MDIconButton : 
-        id : idz_do_gory  
-        icon : "arrow-up-bold-box-outline"       
-        pos_hint : {'center_x':0.5,'center_y':0.18}
-        user_font_size : 40 
-        on_press: root.buttonUP()
-    MDIconButton : 
-        id : idz_do_dolu  
-        icon : "arrow-down-bold-box-outline"       
-        pos_hint : {'center_x':0.5,'center_y':0.1}
-        user_font_size : 40 
-        on_press: root.button_DOWN()
-
-    MDIconButton : 
-        id : idz_w_prawo  
-        icon : "arrow-right-bold-box-outline"       
-        pos_hint : {'center_x':0.65,'center_y':.1}
-        user_font_size : 40 
-        on_press: root.button_RIGHT()
-    MDIconButton :
-        id : idz_w_lewo   
-        icon : "arrow-left-bold-box-outline"       
-        pos_hint : {'center_x':0.35,'center_y':0.1}
-        user_font_size : 40 
-        on_press: root.button_LEFT()
-    MDRoundFlatButton: 
-        text: "SAVE LOCATION"
-        font_size: 12
-        pos_hint: {"center_x":0.5,"center_y":0.98}
-        on_press: root.Save_Location_IN_DataBASE()
-    MDRoundFlatButton: 
-        text: "BACK TO YOUR SAVE LOCATION"
-        font_size: 12
-        pos_hint: {"center_x":0.5,"center_y":0.89}
-        on_press: root.PLAYER_POSITION_FROMDATABASE()
-
-<FightFighters>:
-    name: 'Battle'
-    id : battlessc
-    FitImage: 
-        source: 'img/myicons/bagna.png'
-        id : battlescreen
-    MDIconButton :
-        id : player   
-        icon : 'img/Knight/Attack/5.png'     
-        pos_hint : {'center_x':0.1,'center_y':0.4}
-        user_font_size : 80
-    Label:
-        text:''
-        id:nick
-        pos_hint : {'center_x':0.1,'center_y':0.6}
-    Label:
-        text:''
-        id:playerhp
-        pos_hint : {'center_x':0.1,'center_y':0.7}
-    Label:
-        text:''
-        id:enemyhp
-        pos_hint : {'center_x':0.9,'center_y':0.7}
-    Label:
-        text:''
-        id: monstername
-        pos_hint : {'center_x':0.9,'center_y':0.6}
-        
-    MDIconButton :
-        id : monster  
-        icon : 'img/myicons/goblin.png'       
-        pos_hint : {'center_x':0.9,'center_y':0.4}
-        user_font_size : 80 
-        on_press: root.petla_walki()
-        
-<FightDragon>:
-    name: 'battledragon'
-    id : battles
-    FitImage: 
-        source: "img/Background/background.png"
-        id : battlescreen
-    MDIconButton :
-        id : player   
-        icon : 'img/Knight/Attack/5.png'     
-        pos_hint : {'center_x':0.1,'center_y':0.4}
-        user_font_size : 80
-    Label:
-        text:''
-        id:nick
-        pos_hint : {'center_x':0.1,'center_y':0.6}
-    Label:
-        text:''
-        id:playerhp
-        pos_hint : {'center_x':0.1,'center_y':0.7}
-    Label:
-        text:''
-        id:enemyhp
-        pos_hint : {'center_x':0.9,'center_y':0.7}
-    Label:
-        text:''
-        id: monstername
-        pos_hint : {'center_x':0.9,'center_y':0.6}
-        
-    MDIconButton :
-        id : monster  
-        icon : "img/myicons/dragon.png"    
-        pos_hint : {'center_x':0.9,'center_y':0.4}
-        user_font_size : 180 
-        on_press: root.petla_walki()
-
-"""
-
-#############################################################################################
-# GLOBALNE!!!!!!!
 USER_ID = None
 USER_NAME = None
 PIONOWA_POZYCJA_GRACZA = None
 POZIOMA_POZYCJA_GRACZA = None
-DZWIGNIAPOBORU = True
-licznik = 0
+LICZNIK = 0
 PLAYEREXPERIENCE = 0
 PLAYER_LV = 1
+BACKGROUND = ''
+MONSTER_ICON = ''
 
-#############################################################################################
-# WELCOME SCREEN
 
 class MenuScreen(Screen):
     pass
 
-###############################################################################################
-# LOGIN FUNCTION
-class LoginScreen(Screen):
 
+class LoginScreen(Screen):
     def build(self):
         pass
 
     def check_player_lv(self):
-        if PLAYEREXPERIENCE >= 0 and PLAYEREXPERIENCE <= 299:
-            self.LV = 1
-        elif PLAYEREXPERIENCE > 300 and PLAYEREXPERIENCE <= 999:
-            self.LV = 2
-        elif PLAYEREXPERIENCE > 1000 and PLAYEREXPERIENCE <= 2000:
-            self.LV = 3
-        elif PLAYEREXPERIENCE > 2001 and PLAYEREXPERIENCE <= 4500:
-            self.LV = 4
-        elif PLAYEREXPERIENCE > 4501 and PLAYEREXPERIENCE <= 10000:
-            self.LV = 5
-        elif PLAYEREXPERIENCE > 10001 and PLAYEREXPERIENCE <= 17000:
-            self.LV = 6
-        elif PLAYEREXPERIENCE > 17001 and PLAYEREXPERIENCE <= 29000:
-            self.LV = 7
-        elif PLAYEREXPERIENCE > 29001 and PLAYEREXPERIENCE <= 45000:
-            self.LV = 8
-        elif PLAYEREXPERIENCE > 45001 and PLAYEREXPERIENCE <= 67000:
-            self.LV = 9
-        elif PLAYEREXPERIENCE > 67001:
-            self.LV = 10
+        self.level = 1
+        if PLAYEREXPERIENCE > 300:
+            self.level = 2
+        if PLAYEREXPERIENCE > 1000:
+            self.level = 3
+        if PLAYEREXPERIENCE > 2001:
+            self.level = 4
+        if PLAYEREXPERIENCE > 4501:
+            self.level = 5
+        if PLAYEREXPERIENCE > 10001:
+            self.level = 6
+        if PLAYEREXPERIENCE > 17001:
+            self.level = 7
+        if PLAYEREXPERIENCE > 29001:
+            self.level = 8
+        if PLAYEREXPERIENCE > 45001:
+            self.level = 9
+        if PLAYEREXPERIENCE > 67001:
+            self.level = 10
+
         global PLAYER_LV
-        PLAYER_LV = self.LV
+        PLAYER_LV = self.level
 
     def login_button_checker(self):
-
         connection = mysql.connector.connect(user='root', password='Wikingowie123x',
                                              host='127.0.0.1', database='yourworldonline',
                                              auth_plugin='mysql_native_password')
 
-        cursorPS = connection.cursor(buffered=True)
+        cursorps = connection.cursor(buffered=True)
         username = self.ids.userlogin.text
         usercheck = (username,)
         datacheck = "SELECT id,username,userscol,pozycjapionowa,pozycjapozioma,experience FROM users WHERE username=%s"
-        cursorPS.execute(datacheck, usercheck)
+        cursorps.execute(datacheck, usercheck)
 
-        for row in cursorPS:
+        for row in cursorps:
             if self.ids.userlogin.text and self.ids.userpassword.text in row:
                 global USER_ID
                 USER_ID = row[0]
@@ -416,254 +78,124 @@ class LoginScreen(Screen):
                 POZIOMA_POZYCJA_GRACZA = row[4]
                 intexp = int(row[5])
                 global PLAYEREXPERIENCE
-                PLAYEREXPERIENCE = int(intexp)
-
+                PLAYEREXPERIENCE = intexp
                 self.manager.current = "UserPlatformFunctions"
                 self.check_player_lv()
         connection.close()
 
-########################################################################################
-# REGISTRATION FUNCTION
 
-class RegistrationScreen(Screen):
-    def build(self):
-        pass
-
-    def regis_button_checker(self):
-        dzwignia = True
-        self.haslo1 = self.ids.userpassword.text
-        self.haslo2 = self.ids.userpasswordagain.text
-        if self.haslo1 != self.haslo2:
-            pass
-        else:
-            connection = mysql.connector.connect(user='root', password='Wikingowie123x',
-                                                 host='127.0.0.1', database='yourworldonline',
-                                                 auth_plugin='mysql_native_password')
-
-            cursor = connection.cursor(buffered=True)
-            email = self.ids.useremail.text
-            emailn = (email,)
-            Queryusermail = "SELECT email FROM users WHERE email=%s"
-            cursor.execute(Queryusermail, emailn)
-            for row_em in cursor:
-                if self.ids.useremail.text in row_em:
-                    dzwignia = False
-                    pass
-
-            connection = mysql.connector.connect(user='root', password='Wikingowie123x',
-                                                 host='127.0.0.1', database='yourworldonline',
-                                                 auth_plugin='mysql_native_password')
-
-            cursor = connection.cursor(buffered=True)
-            username = self.ids.userlogin.text
-            usern = (username,)
-            Queryusername = "SELECT username FROM users WHERE username=%s"
-            cursor.execute(Queryusername, usern)
-            for nameUN in cursor:
-                if self.ids.userlogin.text in nameUN:
-                    dzwignia = False
-                    pass
-
-            if dzwignia == True:
-                connection = mysql.connector.connect(user='root',
-                                                     password='Wikingowie123x',
-                                                     host='127.0.0.1', database='yourworldonline',
-                                                     auth_plugin='mysql_native_password')
-
-                cursor = connection.cursor(buffered=True)
-
-                insertQuery = "INSERT INTO users(username, userscol," \
-                              " email, experience) VALUES(%(username)s, %(userscol)s, %(email)s, %(experience)s)"
-
-                insertData = {'username': self.ids.userlogin.text,
-                              'userscol': self.ids.userpassword.text,
-                              'email': self.ids.useremail.text,
-                              'experience': 0}
-
-                cursor.execute(insertQuery, insertData)
-                connection.commit()
-                connection.close()
-                self.manager.current = "login"
-                connection.close()
-
-
-#################################################################################################
-# SEND USER-PASSWORD TO EMAIL
-
-class EmailScreen(Screen):
-    pass
-
-    def email_password_sender(self):
-
+class UsersPlayGameOnMap(Screen):
+    def save_location_in_database(self):
+        global PIONOWA_POZYCJA_GRACZA
+        PIONOWA_POZYCJA_GRACZA = self.ids.player_position.lon
+        global POZIOMA_POZYCJA_GRACZA
+        POZIOMA_POZYCJA_GRACZA = self.ids.player_position.lat
+        self.player_position_from_database()
         connection = mysql.connector.connect(user='root', password='Wikingowie123x',
                                              host='127.0.0.1', database='yourworldonline',
                                              auth_plugin='mysql_native_password')
 
         cursor = connection.cursor(buffered=True)
-        query = 'SELECT id,username,userscol,email FROM users'
-        cursor.execute(query)
-
-        for row in cursor:
-            if self.ids.userlogin.text and self.ids.emailprzypomijhaslo.text in row:
-                self.manager.current = "login"
-
-                cursorPS = connection.cursor(buffered=True)
-                email = self.ids.emailprzypomijhaslo.text
-                my_data = (email,)
-                Querypassword = "SELECT userscol FROM users WHERE email=%s"
-                cursorPS.execute(Querypassword, my_data)
-
-                for PS in cursorPS:
-                    passw = str(PS)
-                    port = 465
-                    smtp_serwer = "smtp.gmail.com"
-                    nadawca = "yourworldonlinemmo@gmail.com"
-                    odbiorca = self.ids.emailprzypomijhaslo.text
-                    syspush = "ofezwwmgprnbryof"
-                    wiadomosc = """\
-                            From: <yourworldonlinemmo@gmail.com>
-                            To: 
-                            Subject: Account
-
-                            Witaj , oto twoje haslo:       
-                            """ + passw
-
-                    ssl_pol = ssl.create_default_context()
-
-                    with smtplib.SMTP_SSL(smtp_serwer, port, context=ssl_pol) as serwer:
-                        serwer.login(nadawca, syspush)
-                        serwer.sendmail(nadawca, odbiorca, wiadomosc)
-
-
-####################################################################################################
-# USERS GAME PLATFORM , MENU SCREEEN
-
-class UsersPlatform(Screen):
-    def build(self):
-        pass
-
-####################################################################################################
-                                   #WORLD EXPLORATION
-
-class UsersPlayGameOnMap(Screen):
-
-    def Save_Location_IN_DataBASE(self):
-        global PIONOWA_POZYCJA_GRACZA
-        PIONOWA_POZYCJA_GRACZA = self.ids.PLAYER_POSITION.lon
-        global POZIOMA_POZYCJA_GRACZA
-        POZIOMA_POZYCJA_GRACZA = self.ids.PLAYER_POSITION.lat
-        self.PLAYER_POSITION_FROMDATABASE()
-
-        connection = mysql.connector.connect(user='root', password='Wikingowie123x',
-                                                     host='127.0.0.1', database='yourworldonline',
-                                                     auth_plugin='mysql_native_password')
-
-        cursor = connection.cursor(buffered=True)
-        pozycjapionowa= self.ids.PLAYER_POSITION.lon
-        pozycjapozioma= self.ids.PLAYER_POSITION.lat
+        pozycjapionowa = self.ids.player_position.lon
+        pozycjapozioma = self.ids.player_position.lat
         username = USER_NAME
-        usernlondi = (pozycjapionowa,username,)
-        usernlandi= (pozycjapozioma,username,)
-        Querylonditude = "UPDATE users set pozycjapionowa = %s WHERE username=%s"
-        cursor.execute(Querylonditude, usernlondi)
-        Querylanditude = "UPDATE users set pozycjapozioma = %sWHERE username=%s"
-        cursor.execute(Querylanditude, usernlandi)
-
-
+        usernlondi = (pozycjapionowa, username,)
+        usernlandi = (pozycjapozioma, username,)
+        querylonditude = "UPDATE users set pozycjapionowa = %s WHERE username=%s"
+        cursor.execute(querylonditude, usernlondi)
+        querylanditude = "UPDATE users set pozycjapozioma = %sWHERE username=%s"
+        cursor.execute(querylanditude, usernlandi)
         connection.commit()
         if connection.is_connected():
             cursor.close()
             connection.close()
 
-
-    def PLAYER_POSITION_FROMDATABASE(self):
-        playerpos = self.ids.PLAYER_POSITION
+    def player_position_from_database(self):
+        playerpos = self.ids.player_position
         playerpos.lat = PIONOWA_POZYCJA_GRACZA
         playerpos.lon = POZIOMA_POZYCJA_GRACZA
         mapposition = self.ids.mapview
         mapposition.center_on(playerpos.lat, playerpos.lon)
 
-
-    def MonsterLocationsGenerator(self):
-        global licznik
-        licznik += 1
-        if licznik == 5:
-            lokalizacjalat = self.ids.PLAYER_POSITION.lat
+    def monster_locations_generator(self):
+        global LICZNIK
+        LICZNIK += 1
+        if LICZNIK == 5:
+            lokalizacjalat = self.ids.player_position.lat
             zakresdolny = lokalizacjalat + 0.001
             zakresgorny = lokalizacjalat - 0.001
             randomlatitude = random.uniform(zakresgorny, zakresdolny)
-
-            lokalizacjalon = self.ids.PLAYER_POSITION.lon
+            lokalizacjalon = self.ids.player_position.lon
             zakresprawo = lokalizacjalon - 0.001
             zakreslewo = lokalizacjalon + 0.001
             randomlonditude = random.uniform(zakresprawo, zakreslewo)
             randommonster = random.randint(1, 2)
-
             if randommonster == 1:
                 imgmonster = "img/myicons/goblin.png"
                 self.m1 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
                                          source=imgmonster)
-                self.m1.placeholder = Button(text="Fight with\n monster!", x=70, y=400, on_release=self.GoToFightGOBLIN)
+
+                self.m1.placeholder = Button(text="Fight with\n monster!",
+                                             x=70, y=400, on_release=self.go_to_fight_goblin)
                 self.ids.mapview.add_marker(self.m1)
-            else:
-                imgmonster= "img/myicons/dragon.png"
+            elif randommonster == 2:
+                imgmonster = "img/myicons/dragon.png"
                 self.m2 = MapMarkerPopup(lon=randomlonditude, lat=randomlatitude,
-                                    source=imgmonster)
-                self.m2.placeholder = Button(text="Fight with\n monster!", x=70, y=400, on_release=self.GoToFightDRAGON)
+                                         source=imgmonster)
+
+                self.m2.placeholder = Button(text="Fight with\n monster!",
+                                             x=70, y=400, on_release=self.go_to_fight_dragon)
                 self.ids.mapview.add_marker(self.m2)
-            licznik = 0
+            LICZNIK = 0
 
-    def buttonUP(self):
-        self.LoadPlayerObject(0, 1)
-        self.MonsterLocationsGenerator()
+    def button_up(self):
+        self.load_player_object(0, 1)
+        self.monster_locations_generator()
 
-    def button_RIGHT(self):
-        self.LoadPlayerObject(1, 0)
-        self.MonsterLocationsGenerator()
+    def button_right(self):
+        self.load_player_object(1, 0)
+        self.monster_locations_generator()
 
-    def button_LEFT(self):
-        self.LoadPlayerObject(-1, 0)
-        self.MonsterLocationsGenerator()
+    def button_left(self):
+        self.load_player_object(-1, 0)
+        self.monster_locations_generator()
 
-    def button_DOWN(self):
-        self.LoadPlayerObject(0, -1)
-        self.MonsterLocationsGenerator()
+    def button_down(self):
+        self.load_player_object(0, -1)
+        self.monster_locations_generator()
 
-    def LoadPlayerObject(self, horizontalDirection=0, verticalDirection=0):
-        horizontalSpeed = 0.0001
-        verticalSpeed = 0.0002
-        self.PLAYER_POSITION(
-            self.ids.mapview.lon + horizontalSpeed * horizontalDirection,
-            self.ids.mapview.lat + verticalSpeed * verticalDirection
+    def load_player_object(self, horizontal_direction=0, vertical_direction=0):
+        horizontal_speed = 0.0001
+        vertical_speed = 0.0002
+        self.player_position(
+            self.ids.mapview.lon + horizontal_speed * horizontal_direction,
+            self.ids.mapview.lat + vertical_speed * vertical_direction
         )
 
-    def PLAYER_POSITION(self, lon, lat):
-        self.playerpos = self.ids.PLAYER_POSITION
+    def player_position(self, lon, lat):
+        self.playerpos = self.ids.player_position
         self.playerpos.lat = lat
         self.playerpos.lon = lon
         mapposition = self.ids.mapview
         mapposition.center_on(lat, lon)
 
-    def BuildingsOnMap(self):
-        pass
-
-    def LoadBuildingsFromDataBase(self):
-        pass
-
-    def GoToFightGOBLIN(self, dummy):
+    def go_to_fight_goblin(self, dummy):
+        global BACKGROUND
+        BACKGROUND = 'img/myicons/bagna.png'
+        global MONSTER_ICON
+        MONSTER_ICON = 'img/myicons/goblin.png'
         self.manager.current = "Battle"
         self.ids.mapview.remove_marker(self.m1)
         pass
 
-    def GoToFightDRAGON(self, dummy):
-        self.manager.current = "battledragon"
+    def go_to_fight_dragon(self, dummy):
+        global BACKGROUND
+        BACKGROUND = "img/Background/background.png"
+        global MONSTER_ICON
+        MONSTER_ICON = "img/myicons/dragon.png"
+        self.manager.current = "Battle"
         self.ids.mapview.remove_marker(self.m2)
         pass
-
-####################################################################################################
-# FIGHT SCREEN   PVE
-# PO Wygranej Bitwie zapisz w bazie danych postęp gracza-zdobyte przedmioty i doświadczenie i
-# wróć do okna eksploracji swiata
 
 
 class FightFighters(Screen):
@@ -671,20 +203,18 @@ class FightFighters(Screen):
         super().__init__(**kwargs)
         self.max_hp = 200
         self.monsterHP = 100
-
-
-    def petla_walki(self):
-        self.ids.nick.text= USER_NAME
-        self.ids.monstername.text = 'Your Nemezis'
         self.monsterstrenght = random.randint(2, 20)
         self.player_strenght = (8 * PLAYER_LV * 0.75) + random.randint(2, 10)
+
+    def petla_walki(self):
+        self.ids.monster.icon = MONSTER_ICON
+        self.ids.battlescreen.source = BACKGROUND
+        self.ids.nick.text = USER_NAME
+        self.ids.monstername.text = 'Your Nemezis'
         self.monsterHP -= self.player_strenght
-        #zaatakowałeś stwora
         self.max_hp -= self.monsterstrenght
-        #zostałeś zaatakowany
         self.ids.playerhp.text = str(self.max_hp)
         self.ids.enemyhp.text = str(self.monsterHP)
-
         if self.monsterHP < 0:
             self.ids.playerhp.text = ''
             self.ids.enemyhp.text = ''
@@ -701,86 +231,34 @@ class FightFighters(Screen):
             cursor = connection.cursor(buffered=True)
             username = USER_NAME
             userexp = (PLAYEREXPERIENCE, username,)
-            Queryexp = "UPDATE users set experience = %s WHERE username=%s"
-            cursor.execute(Queryexp, userexp)
+            queryexp = "UPDATE users set experience = %s WHERE username=%s"
+            cursor.execute(queryexp, userexp)
             connection.commit()
             if connection.is_connected():
                 cursor.close()
                 connection.close()
-            #wyswietl napis wygrana i po 1s cofnij uzytkownika do widoku
-
         elif self.max_hp < 0:
             self.monsterHP = 100
             self.max_hp = 200
             self.manager.current = 'screenmapmove'
 
 
-class FightDragon(Screen):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.max_hp = 200 * PLAYER_LV
-        self.monsterHP = 400
-
-
-    def petla_walki(self):
-        self.ids.nick.text= USER_NAME
-        self.ids.monstername.text = 'DRAGON'
-        self.monsterstrenght = random.randint(2, 20)
-        self.player_strenght = (8 * PLAYER_LV * 0.75) + random.randint(2, 10)
-        self.monsterHP -= self.player_strenght
-        #zaatakowałeś stwora
-        self.max_hp -= self.monsterstrenght
-        #zostałeś zaatakowany
-        self.ids.playerhp.text = str(self.max_hp)
-        self.ids.enemyhp.text = str(self.monsterHP)
-
-        if self.monsterHP < 0:
-            self.ids.playerhp.text = ''
-            self.ids.enemyhp.text = ''
-
-            global PLAYEREXPERIENCE
-            PLAYEREXPERIENCE += random.randint(300, 1000)
-            self.monsterHP = 400
-            self.max_hp = 200
-            self.manager.current = 'screenmapmove'
-            connection = mysql.connector.connect(user='root', password='Wikingowie123x',
-                                                 host='127.0.0.1', database='yourworldonline',
-                                                 auth_plugin='mysql_native_password')
-
-            cursor = connection.cursor(buffered=True)
-            username = USER_NAME
-            userexp = (PLAYEREXPERIENCE, username,)
-            Queryexp = "UPDATE users set experience = %s WHERE username=%s"
-            cursor.execute(Queryexp, userexp)
-            connection.commit()
-            if connection.is_connected():
-                cursor.close()
-                connection.close()
-            #wyswietl napis wygrana i po 1s cofnij uzytkownika do widoku
-
-        elif self.max_hp < 0:
-            self.monsterHP = 400
-            self.max_hp = 200
-            self.manager.current = 'screenmapmove'
-
-####################################################################################################
-# WIDGET SCREENS
 sm = ScreenManager()
 sm.add_widget(UsersPlayGameOnMap(name='screenmapmove'))
 sm.add_widget(FightFighters(name='Battle'))
-sm.add_widget(FightDragon(name='battledragon'))
 sm.add_widget(UsersPlatform(name='UserPlatformFunctions'))
 sm.add_widget(MenuScreen(name='menu'))
 sm.add_widget(LoginScreen(name='login'))
 sm.add_widget(RegistrationScreen(name='Registration'))
 sm.add_widget(EmailScreen(name='emailreminder'))
 
-class YourWorldOnline(MDApp):
 
+class YourWorldOnline(MDApp):
     def build(self):
         self.screen = Builder.load_string(screen_helper)
-        # self.sound = SoundLoader.load('img/myicons/music.mp3')
-        # self.sound.play()
+        self.sound = SoundLoader.load('img/myicons/music.mp3')
+        self.sound.play()
         return self.screen
+
 
 YourWorldOnline().run()
